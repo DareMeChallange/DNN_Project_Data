@@ -1,0 +1,39 @@
+CNN----------------------------------------------------------------------
+
+Model - to clasify complex inputs like images, MLPs are not enough. In an image, a pattern may appear anywhere in the input, which the MLPs are no able to generalise when the input is very large. Furthermore, the number of parameters alone would be huge, with each input alone having 224x224x3 parameters, and any subseqent dense layer just exploding this number. Using a CNN, we can capture patterns in the input using filters and convolutions, and thus much fewer parameters. I am then using a classification / regression head to complete the task laveraging the work done by the CNN
+
+Input - I'm retaining all inputs. I'm using the images as input. Since the dataset contains few images, im performing data augmentation, followed by a normalization of the pixel values. After the preprocessing, my input is a tensor of shape (x,y,z)
+
+Output  - for classification problems - dense layers with number of units equal to options, and softmax activation function.
+	- for regression problems - dense layer with how ever many parameters you are trying to find, with sigmoid activation
+
+Loss - classification - sparse categorical cross entropy
+     - regression - mean squared error
+
+Model configuration - number of convolutional layers with ReLU activations, same size padding and He initialization, each followed by a max pooling layer. This is then followed by a global average pooling layer to transform the convolutional output to a shape suitable for dense layers, while keeping the number of parameters much lower than a flattening layer to avoid overfitting. The model flow ends with a dropout layer for regularization before the two output layers. I'm performing hyperparameter optimization on the number and filter size of the convolutional layers and the batch size
+
+Model evaluation - First, i'm splitting the dataset into a train and test set. During the best model search i'm performing cross-validation to assess my model performances. after the best model has been identified, i'm assessing the model capabilities on the test set, using accuracy on the classification head, and mean squared error on the regression head as metrics
+
+
+Formally, my model processes input through a convolution operation and then maps the representation ℎh through pooling and dense layers to produce the output. It learns parameters 𝑊
+W by minimizing the cross-entropy loss for classification or the mean squared error for regression. Its key mathematical property is parameter sharing and local receptive fields, which drastically reduce the number of parameters and give translation invariance, making it suitable for image or spatial data. Therefore, this architecture is more appropriate than an MLP, which would require an infeasible number of parameters on raw pixel inputs.
+
+
+RNN----------------------------------------------------------------------------
+
+Model - since we are dealing with textual data, I'm using a recurrent model to solve the task. Recurrent model can process input of variable lenght, just like string. In feed forward networks, such as CNNs and MLPs, the input is processed all at once, without memory of the previous inputs. With a static structure and fixed input size that has to math that structure, FFNs are unable to process inputs of varying length. RNNs, on the contrary, are specifically designed to handle such inputs. They have a hidden state that is updated at each timestamp to hold information about the 'past', and it is the used at each following timestamp to compute the output. In particular, among the recurrent architectures, i choose to use the biLSTM, as it has both the advantages of an attention mechanism and of capturing the context of a word from both the previous and following words.
+
+Input - use only what is necessary, usually a review or answer. I'm performing tokenization and encoding with a vocabulary size of 20k. After that, im performing a padding at mean + 50% to represent the sequences without too much sparsity. After the preprocessing my input is a matrix of dimensions number of sequences * padding length
+
+Output - classification problem - dense layer with units equal and softmax activation
+	- regression - dense layer with no of units = to variables need found, sclaed sigmoid activation
+
+Loss - classification - sparse categorical cross entropy loss
+	- regression - mean squared error loss
+
+Model configuration - First we need an embedding layer with embedding dimension of 64 or 128 to transform the input to a suitable one for our RNN architecture. We are transforming number_of_sequences x padding into number_of_seqences * padding * embedding_dimension. This layer is then followed by a number of bidirectional LSTM layees, followed by a number of dense layers with dropout, followed by the output layer. In the LSTM cells i'm using the default tanh as activation function and sigmoid as recurrent activation function. in the dense layers i'm using ReLU, as it converges faster and lead to better model performance compared to other choices. Lastly, i'm using softmax/sclaed sigmoid in the output as this is a x problem. As initializers, im using the default normalised uniform glorot initialization for the weight matrix and the default orthogonal for the recurrent weight matrix. Regularise the dense layers using dropout. I am performing hyper parameter tuning on the number of biLSTM layers, the number of hidden units, number of dense layers and units, batch size
+
+Evaluation - Model evaluation - First, i'm splitting the dataset into a train and test set. During the best model search i'm performing cross-validation to assess my model performances. after the best model has been identified, i'm assessing the model capabilities on the test set, using accuracy on the classification head, and mean squared error on the regression head as metrics
+
+
+Formally, my model processes a sequence of inputs step by step using recurrent updates of a hidden state, and in the bidirectional case combines information from both the forward and backward directions. The output is then passed through dense layers for classification or regression. It learns parameters by minimizing the cross-entropy loss in classification tasks or the mean squared error in regression tasks. Its key mathematical property is recurrence with gating and bidirectionality, which allows it to capture both past and future context in variable-length sequences, making it suitable for natural language and other sequential data. Therefore, this architecture is more appropriate than a feed-forward or unidirectional RNN, which cannot fully exploit sequential dependencies in both directions.
